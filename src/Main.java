@@ -15,6 +15,8 @@ public class Main {
 
     private static boolean running = true, invalid = false;
 
+    private static long lastTime = -1;
+
     private static long TIMEZONE_OFFSET;
 
     private static String display;
@@ -65,8 +67,22 @@ public class Main {
             } else {
                 invalid = false;
                 File[] directories = Arrays.stream(Objects.requireNonNull(saves.listFiles())).filter(file -> file.isDirectory()).toArray(File[]::new);
-                Arrays.sort(directories, Comparator.comparingLong(File::lastModified));
-                return directories[directories.length - 1];
+
+                if (directories.length == 0) {
+                    return null;
+                }
+
+                File latestDirectory = directories[0];
+                long latestDirectoryTime = latestDirectory.lastModified();
+                for (int i = 1; i < directories.length; i++) {
+                    long curDirectoryTime = directories[i].lastModified();
+                    if (curDirectoryTime > latestDirectoryTime) {
+                        latestDirectory = directories[i];
+                        latestDirectoryTime = curDirectoryTime;
+                    }
+                }
+
+                return latestDirectory;
             }
         } catch(Exception e) {
             e.printStackTrace();
@@ -151,12 +167,10 @@ public class Main {
                     System.err.println("Directory is invalid or there is no saves folder.");
                     chooseDirectory(input);
                 }
-                Thread.sleep(50);
+                Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
     }
-
-    public static void setInvalid(boolean i) { invalid = i; }
 }
